@@ -2,7 +2,6 @@
     margin-top: 10px;
 }
 .pokemonName, #typeList {
-    /*border: 1px solid black;*/
     display: block;
     margin-left: auto;
     margin-right: auto;
@@ -10,8 +9,8 @@
     margin-bottom: 0px;
     width: 90%;
     position:relative;
-    padding: 0.3em
-    
+    padding: 0.3em;
+    cursor: pointer;
   }
 
 .pokemonName:hover {
@@ -19,12 +18,11 @@
 }
 
 #typeDropdown{
-    width: 90%;
+    width: 80%;
     border-width: 0px 0px 1px 0px;
-    display: block;
-    margin-left: auto;
+    display: inline;
     margin-right: auto;
-   	margin-bottom: 1%;
+    margin-bottom: 1%;
     
 }
 
@@ -43,6 +41,7 @@
     margin-right: auto;
     width: 90%;
     height: 300px;
+    cursor: default;
 }
 
 img {
@@ -61,6 +60,7 @@ h3 {
 
 .back {
     color: #2ca0c8;
+    cursor: pointer;
 }
 
 button {
@@ -75,6 +75,15 @@ button {
     color: white;
     padding: 2%;
     font-weight: 450;
+    cursor: pointer;
     
+}
+
+.clear {
+    float:right;
+    margin-right: 5%;
+    margin-top: 1%;
+    color: #2ca0c8;
+    cursor: pointer;
 }
 

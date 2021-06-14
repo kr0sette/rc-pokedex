@@ -3,12 +3,12 @@
     var moduleDiv = dom("#pendo-resource-center-container");
     var dropdownDiv = dom("#typeDropdown");
     var pokeListDiv = dom('#pokeList');
-    var originalPokeCount = 151;
     var hideClass = "pokedex-hide";
-    //Start by generating a dropdown list & a list of 151 pokemon and placing them on the page    
+
+    //Generate a dropdown list 
     createTypesDropdown();
-    fetchPokemon();
-    //Fetch list of pokemon types and add each type to the dropdown list
+
+    //Fetch list of pokemon types from API and add each type to the dropdown list
     async function createTypesDropdown() {
         var url = 'https://pokeapi.co/api/v2/type/';
         var response = await fetch(url);
@@ -21,35 +21,67 @@
                 dropdownDiv.append(`<option value="${type.name}">${typeName}</option>`)
             });
     }
-    //Fetch info for 151 pokemon from API
-    function fetchPokemon() {
-        for (let i = 1; i <= originalPokeCount; i++) {
-            getPokemon(i);
-        }
-    };
-    //Fetch the individual info from PokeAPI
-    async function getPokemon(id) {
-        var url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+
+    //Fetch list of all pokemon names from API
+    async function getPokemonList() {
+        var url = 'https://pokeapi.co/api/v2/pokemon/?limit=1118';
+        //var url = `https://pokeapi.co/api/v2/pokemon/${id}`;
         var response = await fetch(url);
-        var pokemon = await response.json();
-        createPokeContent(pokemon, pokemon.id);
+        var resultsJSON = await response.json();
+        var pokemonList = resultsJSON.results;
+        return pokemonList;
+        //fetchPokemon(pokemon);
     }
-    //Fetch list of pokemon with a specific type
+    //Then loop thru results
+    getPokemonList().then( function(res) {
+        for (let i = 0; i < res.length; i++){
+            var url = res[i].url;
+            var regex = "(?<=pokemon\/)\\d+";
+            var match = url.match(regex);
+                        
+            var id = parseInt(match[0]);
+            var name = res[i].name;
+            //then pass it onto template for an individual name for the list view
+            createPokeList(id, name);    
+        } 
+    });
+
+
+    //Template for element that contains individual pokemon name for the list view
+    function createPokeList(id, name) {
+                //Grab id and pad with leading 0s
+                var displayID = JSON.stringify(id).padStart(3, '0');
+                //Grab pokemon name and capitalize
+                var pokeName = name[0].toUpperCase() + name.slice(1);
+                var pokeElement = `<div class="pokeElement">
+                    <div class='pokemonName' id='list-${name}' data-id='${id}'>${displayID}. ${pokeName}</div>
+                </div>`;
+                pokeListDiv.append(pokeElement);
+    }
+
+
+    //Fetch list of pokemon that has a specific type
     async function getPokemonByType(type) {
         var url = `https://pokeapi.co/api/v2/type/${type}`;
         var response = await fetch(url);
         var resultsJSON = await response.json();
-        var pokemonByType = Object.values(resultsJSON.pokemon);
-        //console.log(pokemonByType);
-        pokemonByType.forEach(
-            function(res) {
-                getPokemon(res.pokemon.name);
-            });
+        var pokemonByType = resultsJSON.pokemon;
+        return pokemonByType;
     }
-    //Generate list of pokemon to display
-    function createPokeContent(pokemon, id) {
+
+    //Fetch info for individual pokemon
+    async function getPokemonInfo(id) {
+        var url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+        var response = await fetch(url);
+        var pokemon = await response.json();
+        return pokemon;
+    }
+
+
+    //Template for element that contains individual pokemon info
+    function createPokeInfo(pokemon, element) {
         //Grab pokemon ID and pad it with leading 0s
-        var displayID = JSON.stringify(id).padStart(3, '0');
+        var displayID = JSON.stringify(pokemon.id).padStart(3, '0');
         //Grab pokemon name and capitalize
         var pokeName = pokemon.name[0].toUpperCase() + pokemon.name.slice(1);
         //Grab pokemon type
@@ -69,68 +101,105 @@
         //Grab pokemon weight
         var pokeWeight = pokemon.weight / 10;
         //Put API info into DOM
-        var pokeElement = `<div class="pokeElement">
-    <p class='pokemonName' id='${pokemon.name}' data-id='${id}'>${displayID}. ${pokeName}</p>
-</div>
-<div class='infoTile pokedex-hide' id=''${pokemon.name}Info' data-id='tile-${id}'>
+        var pokeElement = `<div class='infoTile' id='${pokemon.name}Info' data-id='tile-${pokemon.id}'>
     <p class='back'>Go Back</p>
     <h3 class='pokemonTitle'>#${displayID} ${pokeName}</h3>
-    <div class="pokemonInfo" data-id='info-${id}'>
-        <img class='pokemonPic' data-id='picture-${id}' src='${pokePic}'>
-        <div class="pokemonInner" data-id='inner-${id}'>
-            <span class='pokemonType' data-id='type-${id}'><b>Type:</b> ${pokeTypes}</span></br>
-            <span class='pokemonHeight' data-id='height-${id}'><b>Height:</b> ${pokeHeight}cm</span></br>
-            <span class='pokemonWeight' data-id='weight-${id}'><b>Weight:</b> ${pokeWeight}kg</span>
+    <div class="pokemonInfo" data-id='info-${pokemon.id}'>
+        <img class='pokemonPic' data-id='picture-${pokemon.id}' src='${pokePic}'>
+        <div class="pokemonInner" data-id='inner-${pokemon.id}'>
+            <span class='pokemonType' data-id='type-${pokemon.id}'><b>Type:</b> ${pokeTypes}</span></br>
+            <span class='pokemonHeight' data-id='height-${pokemon.id}'><b>Height:</b> ${pokeHeight}cm</span></br>
+            <span class='pokemonWeight' data-id='weight-${pokemon.id}'><b>Weight:</b> ${pokeWeight}kg</span>
         </div>
     </div>
     <div class="poke-btn-container">
         <button class="choose-btn" value="${pokeName}" >I choose you!</button>
     </div>
 </div>`;
-        pokeListDiv.append(pokeElement);
+        element.insertAdjacentHTML('afterend',pokeElement);
     }
+
+
+//Event listeners
     moduleDiv
         //Open Pokemon info when you click on name in list view
         .on("click", ".pokemonName", function(event) {
+            var id = event.target.getAttribute("data-id");
+            var listName = event.target.parentNode;
+            getPokemonInfo(id).then( function(res) {
+                createPokeInfo(res, listName);
+            });
             //Hide the list of pokemon names & the drop down
-            hideDiv("#typeDropdown");
+            hideDiv("#typeList");
             hideDiv(".pokemonName");
-            //Unhide and display just the pokemon info
-            var parent = event.target.parentNode;
-            unhideDiv(parent.nextElementSibling);
+            
+
         })
         //Return from Pokemon info back to list view
         .on("click", ".back", function(event) {
             //Unhide the list of pokemon names & the drop down
             unhideDiv(".pokemonName");
-            unhideDiv("#typeDropdown");
-            //Unhide and display just the pokemon info
-            hideDiv(event.target.parentNode);
+            unhideDiv("#typeList");
+            //Remove the pokemon Info
+            var infoTileDiv = dom('.infoTile');
+            infoTileDiv.remove();
         })
         //Select an option from dropdown to filter
         .on("change", "#typeDropdown", function(event) {
-            //If a type is chose, filter list by that type
+            //If a type is chosen, filter list by that type
             if (event.target.value !== "none") {
-                pokeListFilter = [];
                 pokeListDiv.html("");
-                getPokemonByType(event.target.value);
+                getPokemonByType(event.target.value).then(function (res){
+                    for (var i = 0; i < res.length; i++){
+                        var url = res[i].pokemon.url;
+                        var regex = "(?<=pokemon\/)\\d+";
+                        var match = url.match(regex);
+                        
+                        var id = parseInt(match[0]);
+                        var name = res[i].pokemon.name;
+                        createPokeList(id, name);
+                    }
+                });
             }
             //If "Select a type" is chose, go back to regular list view
             else {
                 pokeListDiv.html("");
-                fetchPokemon();
-            }
+                getPokemonList().then( function(res) {
+                    for (let i = 0; i < res.length; i++){
+                        var id = i+1;
+                        var name = res[i].name;
+                        createPokeList(id, name);
+                }   
+                })
+            };
         })
+        //Reset filter & list view when you hit the clear link
+        .on("click",".clear", function(event){
+            var element = dom("#typeDropdown")[0];
+            element.value = "none";
+            pokeListDiv.html("");
+            getPokemonList().then( function(res) {
+                for (let i = 0; i < res.length; i++){
+                    var id = i+1;
+                    var name = res[i].name;
+                    createPokeList(id, name);
+                }   
+            })
+            
+        })
+        //Store the pokemon name when you hover over the "I choose you" button
+        //Button with trigger survey guide
         .on("mouseover", ".choose-btn", function(event) {
-            //var chosenPokemon = "test";
-            //console.log(event.target.value);
             pendo.pro = {};
             pendo.pro.chosenPokemon = event.target.value;
         });
-    function hideDiv(element) {
+    
+//Functions to hide/unhide elements
+function hideDiv(element) {
         dom(element).addClass(hideClass);
     }
-    function unhideDiv(element) {
+
+function unhideDiv(element) {
         dom(element).removeClass(hideClass);
     }
 })(pendo.dom);
