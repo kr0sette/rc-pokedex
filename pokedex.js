@@ -117,6 +117,9 @@
     </div>
 </div>`;
         element.insertAdjacentHTML('afterend',pokeElement);
+        pendo.track("Poke Info Viewed", {
+            PokemonName: `${pokeName}`
+        });
     }
 
 
@@ -191,6 +194,7 @@
         //Button with trigger survey guide
         .on("mouseover", ".choose-btn", function(event) {
             pendo.pro = {};
+            pendo.pro.chosenPokemon = "";
             pendo.pro.chosenPokemon = event.target.value;
         });
     

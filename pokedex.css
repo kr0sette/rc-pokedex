@@ -44,7 +44,8 @@
     cursor: default;
 }
 
-img {
+.pokemonPic {
+    width: 96px;
     display: inline;
     float: left;
 }
@@ -53,7 +54,7 @@ img {
     margin-top: 10%;
 }
 
-h3 {
+.pokemonTitle {
     font-weight: bold;
     margin-bottom: 1%;
 }
@@ -63,7 +64,7 @@ h3 {
     cursor: pointer;
 }
 
-button {
+.choose-btn {
     display: block;
     margin-top: 5%;
     margin-bottom: 5%;
